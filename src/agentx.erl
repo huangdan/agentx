@@ -108,14 +108,19 @@ handle_info(check_host,#state{channel =  Channel} = State) ->
 					 {jid, node()},
 					 {worker_num, WorkerNum},
 					 {workers, Nodes} | HostInfo],
-        amqp:send(Channel, <<"metric">>, term_to_binary(Metrics)),
+	case Channel ==  undefined of
+	false ->
 	Payload = term_to_binary({host, HostInfo1}, [compressed]),
-        amqp:send(Channel, <<"host">>, Payload),
-	erlang:send_after(300*1000, self(), check_host)
+        amqp:send(Channel, <<"metric">>, term_to_binary(Metrics)),
+        amqp:send(Channel, <<"host">>, Payload);
+	true ->
+		ignore
+	end
     catch
     _:Ex ->
 		{error, Ex}
     end,
+    erlang:send_after(300*1000, self(), check_host),
     {noreply, State};
 
 handle_info(heartbeat, #state{channel=undefined} = State) ->
