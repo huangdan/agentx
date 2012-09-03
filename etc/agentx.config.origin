@@ -1,0 +1,27 @@
+[{kernel,
+    [{start_timer, true}]},
+ {evmon, [
+    {vm_memory_high_watermark, 0.2},
+    {proc, [{long_gc, 500}, {large_heap, 10000000}, busy_port]}
+ ]},
+ {amqp_client, [
+    {broker,[{host, "AMQP_HOST"},
+            {vhost, <<"/AMQP_VHOST">>},
+            {user, <<"AMQP_USER">>},
+            {password, <<"AMQP_PASS">>}]}
+ ]},
+{sasl, [
+	{sasl_error_logger, {file, "log/agentx_sasl.log"}}
+ ]},
+ {lager, [
+    {error_logger_redirect, false},
+    {crash_log, "log/agentx_crash.log"},
+    {handlers, [
+      {lager_console_backend, info},
+      {lager_file_backend, [
+        {"log/agentx_error.log", error, 10485760, "$D0", 5},
+        {"log/agentx_info.log", info, 10485760, "$D0", 5}
+      ]}
+    ]}
+ ]}
+].

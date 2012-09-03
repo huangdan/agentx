@@ -1,0 +1,10 @@
+# Trapd
+
+snmp trap daemon.
+
+# Commands 
+
+agent_ctl status 
+
+agent_ctl info 
+

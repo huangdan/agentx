@@ -1,0 +1,42 @@
+#!/bin/bash
+#: Title       : setting
+#: Date        : 2012-04-24
+#: Author      : "Ery Lee" <ery.lee@gmail.com> from opengoss.com
+#: Version     : 1.0 
+#: Description : mysql, amqp, errdb settings
+
+# Identify the script name
+SCRIPT=`basename $0`
+ROOTDIR=$(cd ${0%/*} && pwd)
+VERSION=1.0
+DATE_OF_CREATION=2012-04-26
+AUTHOR="huangdan <huangd@opengoss.com>"
+
+#NOTICE: amqp
+AMQP_HOST=192.168.100.151
+AMQP_VHOST=wifioss
+AMQP_USER=wifioss
+AMQP_PASS=public
+
+#NOTICE: errdb
+ERRDB_HOST=192.168.100.151
+ERRDB_PORT=7272
+
+OS_TYPE=`uname`
+if [ "$OS_TYPE" == "Darwin" ]; then
+	SED_OPTS="-i ''"
+else
+	SED_OPTS="-i"
+fi
+
+#configure agentx 
+cd $ROOTDIR/etc/
+echo "configuring agentx/etc/agentx.config..."
+cp agentx.config.origin agentx.config
+sed -e "s/AMQP_HOST/$AMQP_HOST/g" \
+	-e "s/AMQP_VHOST/$AMQP_VHOST/g" \
+	-e "s/AMQP_USER/$AMQP_USER/g" \
+	-e "s/AMQP_PASS/$AMQP_PASS/g" \
+	-e "s/ERRDB_HOST/$ERRDB_HOST/g" \
+	-e "s/ERRDB_PORT/$ERRDB_PORT/g" \
+	$SED_OPTS agentx.config

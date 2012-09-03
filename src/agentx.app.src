@@ -1,0 +1,13 @@
+{application, agentx,
+ [{description, "agentx"},
+  {vsn, "6.0"},
+  {modules, [agentx, 
+		agentx_app,
+		agentx_sup,
+		mon_aix,
+		mon_hpux,
+		mon_unix]},
+  {registered, [agentx]},
+  {applications, [kernel, stdlib]},
+  {env, []},
+  {mod, {agentx_app, []}}]}.
