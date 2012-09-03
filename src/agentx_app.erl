@@ -19,12 +19,14 @@
     
 start() ->
     [application:start(App) || App <- [sasl, crypto, elog, evmon]],
+    [application:start(App) || App <- [amqp_client, agentx]],
     {_, OsType} = os:type(),
 	start_osmon(OsType).
 
 stop() ->
     {_, OsType} = os:type(),
     [stop_app(App) || App <- lists:reverse(apps(OsType))],
+    [application:stop(App) || App <- [agentx, amqp_client]],
     [application:stop(App) || App <- [evmon, elog, crypto, sasl]].
 
 start(normal, _Args) ->
