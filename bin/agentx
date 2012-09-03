@@ -147,7 +147,8 @@ case "$1" in
         #    console_clean)  BOOTFILE=start_clean ;;
         #esac
         # Setup beam-required vars
-		ERL_LIBS=$RUNNER_BASE_DIR/../lib
+		ERL_LIBS=$RUNNER_BASE_DIR/lib
+		echo "test:$ERL_LIBS"
         ROOTDIR=$RUNNER_BASE_DIR
         BINDIR=$ERTS_PATH
         EMU=beam
