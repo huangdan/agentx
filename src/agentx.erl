@@ -101,7 +101,6 @@ handle_info(check_host,#state{channel =  Channel} = State) ->
         end
     of
     {ok, HostInfo, Metrics} ->
-    ?ERROR("HostInfo: ~p,~p", [HostInfo, Metrics]),
         HostInfo1 = [{dn, HostDn},
 					 {name, HostName},
 					 {presence, 1},

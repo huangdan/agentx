@@ -2,6 +2,8 @@
 
 -include_lib("elog/include/elog.hrl").
 
+-include("metric.hrl").
+
 -export([run/1]).
 
 run(Args) ->
@@ -37,7 +39,7 @@ cputask(Dn, Ts, Output) ->
         {"0.0", "0.0", "0.0"}
     end,
     CpuInfo = lists:concat(["load1=", Load1, ", load5=", Load5, ", load15=", Load15]),
-    CpuDatalog = {metric, 'opengoss.localcpu', Dn, Ts, [
+    CpuDatalog = #metric{name='opengoss.localcpu',from="agent",dn= Dn, timestamp=Ts, data=[
         {cpu1min, list_to_float(Load1)}, 
         {cpu5min, list_to_float(Load5)}, 
         {cpu15min, list_to_float(Load15)}]}, 
@@ -49,7 +51,7 @@ cputask(Dn, Ts, Output) ->
         ?WARNING("task nomatch", []),
         0
     end,
-	TaskDatalog = {metric, 'opengoss.localtask', Dn, Ts, [
+	TaskDatalog = #metric{name='opengoss.localtask', from="agent",dn=Dn, timestamp=Ts, data=[
 		{taskTotal, TaskTotal}]},
     {CpuInfo, CpuDatalog, TaskDatalog}.
 
@@ -88,7 +90,7 @@ swapmem(Dn, Ts, Output) ->
     SwapInfo = lists:concat(["total=", SwapTotal, ", used=", SwapUsed, 
         ", free=", SwapFree, ", usage=", SwapUsage, "%"]),
 
-    MemDatalog = {metric, 'opengoss.localmem', Dn, Ts, [
+    MemDatalog = #metric{name='opengoss.localmem', from="agent", dn= Dn, timestamp=Ts, data=[
         {memTotal, MemTotal}, {memUsed, MemUsed}, {memFree, MemFree}, {memUsage, MemUsage},
         {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}, {swapUsage, SwapUsage}]},
     {MemInfo, SwapInfo, MemDatalog}.
@@ -114,7 +116,7 @@ parse(Dn, Ts, [L1,L2,L3,L4|Lines], InfoAcc, DatalogAcc) ->
         "(KB), avail=", Free, "(KB), used=", Used, 
         "(KB), usage=", Usage, "%"]),
     DiskDn = lists:concat(["disk=", Dev, ",", Dn]),
-    Datalog = {metric, 'opengoss.localdisk', DiskDn, Ts, [
+    Datalog = #metric{name='opengoss.localdisk', from="agent", dn=DiskDn, timestamp=Ts, data=[
             {diskTotal, Total}, {diskUsed, Used}, 
             {diskFree, Free}, {diskUsage, Usage}]},
     parse(Dn, Ts, Lines, [Info|InfoAcc], [Datalog|DatalogAcc]).

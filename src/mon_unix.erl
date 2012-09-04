@@ -1,6 +1,8 @@
 -module(mon_unix).
 
 -include_lib("elog/include/elog.hrl").
+ 
+-include("metric.hrl").
 
 -export([run/1]).
 
@@ -26,14 +28,14 @@ run(Args) ->
 
 cpu_metric(Dn, Ts) ->
     %?INFO("cpu metric", []),
-	{metric, 'opengoss.localcpu', Dn, Ts, [
+	#metric{name='opengoss.localcpu', from = "agent",dn=Dn, timestamp=Ts, data=[
         {cpu1min, cpu_sup:avg1() / 256}, 
         {cpu5min, cpu_sup:avg5() / 256}, 
         {cpu15min, cpu_sup:avg15() / 256}]}. 
 
 task_metric(Dn, Ts) ->
     %?INFO("task metric", []),
-	{metric, 'opengoss.localtask', Dn, Ts, [
+	#metric{name='opengoss.localtask', from="agent", dn=Dn, timestamp=Ts, data=[
 		{taskTotal, cpu_sup:nprocs()}]}.
 
 mem_metric(Dn, Ts) ->
@@ -45,7 +47,7 @@ mem_metric(Dn, Ts) ->
     {value, SwapTotal} = dataset:get_value(total_swap, Dataset, 0),
     {value, SwapFree} = dataset:get_value(free_swap, Dataset, 0),
     SwapUsed = SwapTotal - SwapFree,
-    {metric, 'opengoss.localmem', Dn, Ts, [
+    #metric{name='opengoss.localmem', from="agent", dn=Dn, timestamp=Ts, data=[
         {memTotal, MemTotal}, {memUsed, MemUsed}, {memFree, MemFree},
         {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}]}.
 
@@ -56,7 +58,7 @@ disk_metrics(Dn, Ts) ->
         DiskDn = list_to_binary(["disk=", Dev, ",", Dn]),
         DiskUsed = (DiskTotal * Usage) div 100,
         DiskAvail = DiskTotal - DiskUsed,
-        {metric, 'opengoss.localdisk', DiskDn, Ts, [
+        #metric{name='opengoss.localdisk',from="agent", dn=DiskDn,timestamp=Ts,data= [
             {diskTotal, DiskTotal}, {diskUsed, DiskUsed}, {diskFree, DiskAvail}]}
     end, Disks).
 

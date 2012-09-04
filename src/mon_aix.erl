@@ -1,5 +1,7 @@
 -module(mon_aix).
 
+-include("metric.hrl").
+
 -include_lib("elog/include/elog.hrl").
 
 -export([run/1]).
@@ -16,7 +18,7 @@ run(Args) ->
     {MemInfo, MemDatalog} = memory(MemOutput),
     SwapOutput = os:cmd("swap -l"),
     {SwapInfo, SwapDatalog} = swap(SwapOutput),
-    MemSwapDatalog = {metric, 'opengoss.localmem', Dn, Ts, 
+    MemSwapDatalog = #metric{name='opengoss.localmem',from="agent", dn= Dn, timestamp=Ts,data= 
         MemDatalog ++ SwapDatalog},
     DiskOutput = os:cmd("df -k"),
     {DiskInfo, DiskDatalogs} = disk(Dn, Ts, DiskOutput),
@@ -41,7 +43,7 @@ load(Dn, Ts, Output) ->
         {"0.0", "0.0", "0.0"}
     end,
     CpuInfo = lists:concat(["load1=", Load1, ", load5=", Load5, ", load15=", Load15]),
-    CpuDatalog = {metric, 'opengoss.localcpu', Dn, Ts, [
+    CpuDatalog = #metric{name='opengoss.localcpu', from="agent", dn=Dn, timestamp=Ts, data=[
         {cpu1min, list_to_float(Load1)}, 
         {cpu5min, list_to_float(Load5)}, 
         {cpu15min, list_to_float(Load15)}]}, 
@@ -49,7 +51,7 @@ load(Dn, Ts, Output) ->
 
 task(Dn, Ts, Output) ->
     TaskTotal = list_to_integer(string:strip(Output, both, $\n)),
-	{metric, 'opengoss.localtask', Dn, Ts, [{taskTotal, TaskTotal}]}.
+	#metric{name='opengoss.localtask', from="agent", dn= Dn, timestamp=Ts, data=[{taskTotal, TaskTotal}]}.
 
 memory(Output) ->
     [_, MemLine|_] = string:tokens(Output, "\n"),
