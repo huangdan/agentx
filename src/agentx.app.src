@@ -4,6 +4,7 @@
   {modules, [agentx, 
 		agentx_app,
 		agentx_sup,
+		agentx_ctl,
 		mon_aix,
 		mon_hpux,
 		mon_unix]},
