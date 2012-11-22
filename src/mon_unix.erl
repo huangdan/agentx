@@ -21,24 +21,24 @@ run(Args) ->
                 {swap_info, SwapInfo}, %swap_info()}, 
                 {disk_info, disk_info()}],
     %metrics
-    Datalogs = [cpu_metric(Dn, Ts), task_metric(Dn, Ts), 
-        mem_metric(Dn, Ts) | disk_metrics(Dn, Ts)],
+    Datalogs = [cpu_metric(Dn, Ts, Args), task_metric(Dn, Ts, Args), 
+        mem_metric(Dn, Ts, Args) | disk_metrics(Dn, Ts, Args)],
 
     {ok, HostInfo, Datalogs}.
 
-cpu_metric(Dn, Ts) ->
+cpu_metric(Dn, Ts, Args) ->
     %?INFO("cpu metric", []),
 	#metric{name='opengoss.localcpu', from = "agent",dn=Dn, timestamp=Ts, data=[
         {cpu1min, cpu_sup:avg1() / 256}, 
         {cpu5min, cpu_sup:avg5() / 256}, 
-        {cpu15min, cpu_sup:avg15() / 256}]}. 
+        {cpu15min, cpu_sup:avg15() / 256}], args=Args}. 
 
-task_metric(Dn, Ts) ->
+task_metric(Dn, Ts, Args) ->
     %?INFO("task metric", []),
 	#metric{name='opengoss.localtask', from="agent", dn=Dn, timestamp=Ts, data=[
-		{taskTotal, cpu_sup:nprocs()}]}.
+		{taskTotal, cpu_sup:nprocs()}], args=Args}.
 
-mem_metric(Dn, Ts) ->
+mem_metric(Dn, Ts, Args) ->
     %?INFO("mem metric", []),
     Dataset = memsup:get_system_memory_data(),
     {value, MemTotal} = dataset:get_value(total_memory, Dataset),
@@ -49,9 +49,9 @@ mem_metric(Dn, Ts) ->
     SwapUsed = SwapTotal - SwapFree,
     #metric{name='opengoss.localmem', from="agent", dn=Dn, timestamp=Ts, data=[
         {memTotal, MemTotal}, {memUsed, MemUsed}, {memFree, MemFree},
-        {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}]}.
+        {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}], args=Args}.
 
-disk_metrics(Dn, Ts) ->
+disk_metrics(Dn, Ts, Args) ->
     %?INFO("disk metrics", []),
     Disks = disksup:get_disk_data(),
     lists:map(fun({Dev, DiskTotal, Usage}) -> 
@@ -59,7 +59,7 @@ disk_metrics(Dn, Ts) ->
         DiskUsed = (DiskTotal * Usage) div 100,
         DiskAvail = DiskTotal - DiskUsed,
         #metric{name='opengoss.localdisk',from="agent", dn=DiskDn,timestamp=Ts,data= [
-            {diskTotal, DiskTotal}, {diskUsed, DiskUsed}, {diskFree, DiskAvail}]}
+            {diskTotal, DiskTotal}, {diskUsed, DiskUsed}, {diskFree, DiskAvail}], args=Args}
     end, Disks).
 
 load_info() ->

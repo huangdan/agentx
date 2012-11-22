@@ -12,11 +12,11 @@ run(Args) ->
     {value, Dn} = dataset:get_value(dn, Args),
     TopOutput = os:cmd("top -d 1 -n 1"),
     ?INFO("~p", [TopOutput]),
-    {CpuInfo, CpuDatalog, TaskDatalog} = cputask(Dn, Ts, TopOutput),
+    {CpuInfo, CpuDatalog, TaskDatalog} = cputask(Dn, Ts, TopOutput, Args),
     MemOutput = os:cmd("swapinfo -tam"),
-    {MemInfo, SwapInfo, MemDatalog} = swapmem(Dn, Ts, MemOutput),
+    {MemInfo, SwapInfo, MemDatalog} = swapmem(Dn, Ts, MemOutput, Args),
     DiskOutput = os:cmd("/usr/bin/df -k"),
-    {DiskInfo, DiskDatalogs} = disk(Dn, Ts, DiskOutput),
+    {DiskInfo, DiskDatalogs} = disk(Dn, Ts, DiskOutput, Args),
     %%host info
     HostInfo = [{os_type, atom_to_list(OsType)},
                 {ip_addrs, inet_info()}, 
@@ -28,7 +28,7 @@ run(Args) ->
     Datalogs = [CpuDatalog, MemDatalog, TaskDatalog | DiskDatalogs],
     {ok, HostInfo, Datalogs}.
 
-cputask(Dn, Ts, Output) ->
+cputask(Dn, Ts, Output, Args) ->
     Lines = string:tokens(Output, "\r\n"),
     {Load1, Load5, Load15} = 
     case re:run(lists:nth(2, Lines), "Load averages:\\s+(\\d+.\\d+),\\s+(\\d+.\\d+),\\s+(\\d+.\\d+)", [{capture, [1,2,3], list}]) of
@@ -42,7 +42,7 @@ cputask(Dn, Ts, Output) ->
     CpuDatalog = #metric{name='opengoss.localcpu',from="agent",dn= Dn, timestamp=Ts, data=[
         {cpu1min, list_to_float(Load1)}, 
         {cpu5min, list_to_float(Load5)}, 
-        {cpu15min, list_to_float(Load15)}]}, 
+        {cpu15min, list_to_float(Load15)}], args=Args}, 
     TaskTotal =
     case re:run(lists:nth(3, Lines), "(\\d+)\\s+processes", [{capture, [1], list}]) of
     {match, [Total]} ->
@@ -52,10 +52,10 @@ cputask(Dn, Ts, Output) ->
         0
     end,
 	TaskDatalog = #metric{name='opengoss.localtask', from="agent",dn=Dn, timestamp=Ts, data=[
-		{taskTotal, TaskTotal}]},
+		{taskTotal, TaskTotal}], args=Args},
     {CpuInfo, CpuDatalog, TaskDatalog}.
 
-swapmem(Dn, Ts, Output) ->
+swapmem(Dn, Ts, Output, Args) ->
     Lines = string:tokens(Output, "\r\n"),
     {MemTotal, MemUsed, MemFree} = 
     case re:run(lists:nth(5, Lines), "memory\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+", 
@@ -92,20 +92,20 @@ swapmem(Dn, Ts, Output) ->
 
     MemDatalog = #metric{name='opengoss.localmem', from="agent", dn= Dn, timestamp=Ts, data=[
         {memTotal, MemTotal}, {memUsed, MemUsed}, {memFree, MemFree}, {memUsage, MemUsage},
-        {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}, {swapUsage, SwapUsage}]},
+        {swapTotal, SwapTotal}, {swapUsed, SwapUsed}, {swapFree, SwapFree}, {swapUsage, SwapUsage}], args=Args},
     {MemInfo, SwapInfo, MemDatalog}.
 
-disk(Dn, Ts, Output) ->
+disk(Dn, Ts, Output, Args) ->
     Lines = string:tokens(Output, "\r\n"),
-    parse(Dn, Ts, Lines).
+    parse(Dn, Ts, Lines, Args).
 
-parse(Dn, Ts, Lines) ->
-    parse(Dn, Ts, Lines, [], []).
+parse(Dn, Ts, Lines, Args) ->
+    parse(Dn, Ts, Lines, [], [], Args).
 
-parse(_Dn, _Ts, Lines, InfoAcc, DatalogAcc) when length(Lines) < 4 ->
-    {string:join(lists:reverse(InfoAcc), "\n"), DatalogAcc};
+parse(_Dn, _Ts, Lines, InfoAcc, DatalogAcc, Args) when length(Lines) < 4 ->
+    {string:join(lists:reverse(InfoAcc), "\n"), DatalogAcc, Args};
 
-parse(Dn, Ts, [L1,L2,L3,L4|Lines], InfoAcc, DatalogAcc) ->
+parse(Dn, Ts, [L1,L2,L3,L4|Lines], InfoAcc, DatalogAcc, Args) ->
     Tokens = string:tokens(L1, " "),
     Dev = lists:nth(1, Tokens),
     Total = list_to_integer(lists:nth(5, Tokens)),
@@ -119,7 +119,7 @@ parse(Dn, Ts, [L1,L2,L3,L4|Lines], InfoAcc, DatalogAcc) ->
     Datalog = #metric{name='opengoss.localdisk', from="agent", dn=DiskDn, timestamp=Ts, data=[
             {diskTotal, Total}, {diskUsed, Used}, 
             {diskFree, Free}, {diskUsage, Usage}]},
-    parse(Dn, Ts, Lines, [Info|InfoAcc], [Datalog|DatalogAcc]).
+    parse(Dn, Ts, Lines, [Info|InfoAcc], [Datalog|DatalogAcc], args=Args).
 
 inet_info() ->
     {ok, IfNames} = inet:getiflist(),

@@ -93,11 +93,11 @@ handle_info(check_host,#state{channel =  Channel} = State) ->
         {unix, OsType} = os:type(),
         case OsType of
         'hp-ux' ->
-            mon_hpux:run([{dn, HostDn}]);
+            mon_hpux:run([{dn, HostDn}, {objectClass, list_to_binary(["localhost"])}]);
         'aix' ->
-            mon_aix:run([{dn, HostDn}]);
+            mon_aix:run([{dn, HostDn}, {objectClass, list_to_binary(["localhost"])}]);
         _ ->
-            mon_unix:run([{dn, HostDn}]) 
+            mon_unix:run([{dn, HostDn}, {objectClass, list_to_binary(["localhost"])}]) 
         end
     of
     {ok, HostInfo, Metrics} ->

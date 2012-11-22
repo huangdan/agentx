@@ -11,15 +11,19 @@ run(Args) ->
     {unix, OsType} = os:type(),
     {value, Dn} = dataset:get_value(dn, Args),
     Output = os:cmd("uptime"),
-    {CpuInfo, CpuDatalog} = load(Dn, Ts, Output),
+    {CpuInfo, CpuDatalog} = load(Dn, Ts, Output, Args),
     TaskOutput = os:cmd("ps -ef | wc -l"),
-    TaskDatalog = task(Dn, Ts, TaskOutput),
+    TaskDatalog = task(Dn, Ts, TaskOutput, Args),
     MemOutput = os:cmd("svmon -G"),
     {MemInfo, MemDatalog} = memory(MemOutput),
     SwapOutput = os:cmd("swap -l"),
     {SwapInfo, SwapDatalog} = swap(SwapOutput),
-    MemSwapDatalog = #metric{name='opengoss.localmem',from="agent", dn= Dn, timestamp=Ts,data= 
-        MemDatalog ++ SwapDatalog},
+    MemSwapDatalog = #metric{name='opengoss.localmem',
+							 from="agent",
+							 dn=Dn,
+							 timestamp=Ts,
+							 data=MemDatalog ++ SwapDatalog,
+							 args=Args},
     DiskOutput = os:cmd("df -k"),
     {DiskInfo, DiskDatalogs} = disk(Dn, Ts, DiskOutput),
     %%host info
@@ -33,7 +37,7 @@ run(Args) ->
     Datalogs = [CpuDatalog, MemSwapDatalog, TaskDatalog | DiskDatalogs],
     {ok, HostInfo, Datalogs}.
 
-load(Dn, Ts, Output) ->
+load(Dn, Ts, Output, Args) ->
     {Load1, Load5, Load15} = 
     case re:run(Output, "load averages:\\s+(\\d+.\\d+),\\s+(\\d+.\\d+),\\s+(\\d+.\\d+)", [{capture, [1,2,3], list}]) of
     {match, [SLoad1, SLoad5, SLoad15]} ->
@@ -46,12 +50,12 @@ load(Dn, Ts, Output) ->
     CpuDatalog = #metric{name='opengoss.localcpu', from="agent", dn=Dn, timestamp=Ts, data=[
         {cpu1min, list_to_float(Load1)}, 
         {cpu5min, list_to_float(Load5)}, 
-        {cpu15min, list_to_float(Load15)}]}, 
+        {cpu15min, list_to_float(Load15)}], args=Args}, 
     {CpuInfo, CpuDatalog}.
 
-task(Dn, Ts, Output) ->
+task(Dn, Ts, Output, Args) ->
     TaskTotal = list_to_integer(string:strip(Output, both, $\n)),
-	#metric{name='opengoss.localtask', from="agent", dn= Dn, timestamp=Ts, data=[{taskTotal, TaskTotal}]}.
+	#metric{name='opengoss.localtask', from="agent", dn= Dn, timestamp=Ts, data=[{taskTotal, TaskTotal}], args=Args}.
 
 memory(Output) ->
     [_, MemLine|_] = string:tokens(Output, "\n"),

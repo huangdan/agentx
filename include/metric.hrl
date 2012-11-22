@@ -2,6 +2,7 @@
 				 from, %device ip 
 				 dn,   %metric source
 				 timestamp, %metric timestamp
-				 data}). %metric data, proplists
+				 data,
+				 args}). %metric data, proplists
 
 
